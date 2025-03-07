@@ -4,7 +4,9 @@ import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
-import e from 'express';
+import { graphqlHTTP } from 'express-graphql';
+import schema from './graphql/schema.js';
+import resolvers from './graphql/resolvers.js';
 // import { io, server ,app} from './socket.js';
 
 const app = express();
@@ -32,6 +34,11 @@ app.use(multer({storage: fileStorage, fileFilter: fileFilter}).single('image'));
 
 
 app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/graphql', graphqlHTTP({
+    schema: schema,
+    rootValue: resolvers,
+    graphiql: true,
+}));
 app.use((error, req, res, next) => {
     const status = error.statusCode || 500;
     const message = error.message;
