@@ -4,16 +4,24 @@ import validator from 'validator';
 
 export default {
     async createUser({userInput}, req) {
+        const errors = [];
         if (!validator.isEmail(userInput.email)) {
-            const error = new Error('E-Mail is invalid.');
-            throw error;
+            const error = new Error('Email is invalid.');
+            errors.push(error);
         }
         if (validator.isEmpty(userInput.password) || !validator.isLength(userInput.password, { min: 5 })) {
             const error = new Error('Password too short!');
-            throw error;
+            errors.push(error);
         }
         if (validator.isEmpty(userInput.username)) {
             const error = new Error('Username too short!');
+            errors.push(error);
+        }
+
+        if (errors.length > 0) {
+            const error = new Error('Invalid input.');
+            error.data = errors;
+            error.code = 422;
             throw error;
         }
         const email = userInput.email;
