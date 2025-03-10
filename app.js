@@ -7,6 +7,8 @@ import multer from 'multer';
 import { graphqlHTTP } from 'express-graphql';
 import schema from './graphql/schema.js';
 import resolvers from './graphql/resolvers.js';
+import checkAuth from './middleware/auth.js';
+import deleteImage from './util/file.js';
 // import { io, server ,app} from './socket.js';
 
 const app = express();
@@ -30,9 +32,32 @@ const fileFilter = (req, file, cb) => {
         cb(null, false);
     }
 }
+
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 app.use(multer({storage: fileStorage, fileFilter: fileFilter}).single('image'));
 
-
+app.use(checkAuth);
+app.put('/post-image', (req, res, next) => {
+    if (!req.isAuth) {
+        throw new Error('Unauthorized');
+    }
+    if(!req.file) {
+        return res.status(200).json({message: 'File not found'});
+    }
+    if (req.body.oldPath) {
+        deleteImage(req.body.oldPath);
+    }
+    return res.status(201).json({message: 'File saved.', filePath: req.file.path});
+});
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/graphql', graphqlHTTP({
     schema: schema,
@@ -54,16 +79,6 @@ app.use((error, req, res, next) => {
     const data = error.data;
     res.status(status).json({message: message, data : data});
 })
-
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200);
-    }
-    next();
-});
 
 mongoose.connect('mongodb+srv://mofeoluwae:eK6TL4wf1nvQq99M@cluster0.ac0yd.mongodb.net/messages')
 .then(result => {
