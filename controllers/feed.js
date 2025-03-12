@@ -57,22 +57,22 @@ export async function createPost(req, res, next) {
             author: req.userId
         })
         await post.save()
-        const user = await User.findById(req.userId)
-        if (!user) {
+        const savedUser = await User.findById(req.userId)
+        if (!savedUser) {
             const error = new Error('User not found');
             error.statusCode = 404;
             throw error;
         }
-        author = user;
-        user.posts.push(post);
-        await user.save();
+        author = savedUser;
+        savedUser.posts.push(post);
+        await savedUser.save();
         io.emit('posts', {
              action: 'create', 
              post: {
                 ...post._doc,
                  author : {
                     _id: req.userId,
-                    name: user.username
+                    name: author.username
                  }
                 }
             });
@@ -81,6 +81,8 @@ export async function createPost(req, res, next) {
             post: post,
             author: { _id: author._id, name: author.name }
         });
+
+        return savedUser;
     }catch(err) {
             if (!err.statusCode) {
                 err.statusCode = 500;

@@ -9,6 +9,8 @@ import schema from './graphql/schema.js';
 import resolvers from './graphql/resolvers.js';
 import checkAuth from './middleware/auth.js';
 import deleteImage from './util/file.js';
+import authRoute from './routes/auth.js';
+import postRoute from './routes/feed.js';
 // import { io, server ,app} from './socket.js';
 
 const app = express();
@@ -33,6 +35,7 @@ const fileFilter = (req, file, cb) => {
     }
 }
 
+
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
@@ -44,20 +47,22 @@ app.use((req, res, next) => {
 });
 
 app.use(multer({storage: fileStorage, fileFilter: fileFilter}).single('image'));
+app.use('/auth', authRoute);
+app.use('/feed', postRoute);
 
-app.use(checkAuth);
-app.put('/post-image', (req, res, next) => {
-    if (!req.isAuth) {
-        throw new Error('Unauthorized');
-    }
-    if(!req.file) {
-        return res.status(200).json({message: 'File not found'});
-    }
-    if (req.body.oldPath) {
-        deleteImage(req.body.oldPath);
-    }
-    return res.status(201).json({message: 'File saved.', filePath: req.file.path});
-});
+// app.use(checkAuth);
+// app.put('/post-image', (req, res, next) => {
+//     if (!req.isAuth) {
+//         throw new Error('Unauthorized');
+//     }
+//     if(!req.file) {
+//         return res.status(200).json({message: 'File not found'});
+//     }
+//     if (req.body.oldPath) {
+//         deleteImage(req.body.oldPath);
+//     }
+//     return res.status(201).json({message: 'File saved.', filePath: req.file.path});
+// });
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/graphql', graphqlHTTP({
     schema: schema,

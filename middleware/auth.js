@@ -4,8 +4,9 @@ const checkAuth = (req, res, next) => {
     const authHeader = req.get('Authorization');
     console.log(authHeader);
     if (!authHeader) {
-        req.isAuth = false;
-        return next();
+        const error = new Error('Unauthorized');
+        error.statusCode = 401;
+        throw error;
     }
     const token = authHeader.split(' ')[1];
     let decodedToken;
@@ -13,8 +14,8 @@ const checkAuth = (req, res, next) => {
         decodedToken = jwt.verify(token, 'somesupersecretsecret');
         console.log(decodedToken);
     } catch (err) {
-        req.isAuth = false;
-        return next();
+        err.statusCode = 500;
+        throw err;
     }
     if (!decodedToken) {
         const error = new Error('Unauthorized');
@@ -22,7 +23,7 @@ const checkAuth = (req, res, next) => {
         throw error;
     }
     req.userId = decodedToken.userId;
-    req.isAuth = true;
+    // req.isAuth = true;
     next();
 }
 
