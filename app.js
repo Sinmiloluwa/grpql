@@ -11,9 +11,16 @@ import checkAuth from './middleware/auth.js';
 import deleteImage from './util/file.js';
 import authRoute from './routes/auth.js';
 import postRoute from './routes/feed.js';
+import schedule from 'node-schedule';
 // import { io, server ,app} from './socket.js';
 
 const app = express();
+
+
+schedule.scheduleJob('my-job','* * * * *', () => {
+    console.log('I ran ******')
+    schedule.cancelJob('my-job')
+})
 
 app.use(bodyParser.json());
 const __filename = fileURLToPath(import.meta.url);
